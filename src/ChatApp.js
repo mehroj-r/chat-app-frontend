@@ -12,6 +12,23 @@ const ChatApp = () => {
     const [messages, setMessages] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+    const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 768);
+
+    // Handle window resize
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobileView(mobile);
+            // On larger screens, always show sidebar
+            if (!mobile) {
+                setShowSidebar(true);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Fetch chat list
     useEffect(() => {
@@ -91,6 +108,11 @@ const ChatApp = () => {
         try {
             const response = await axios.get(`http://127.0.0.1:8000/api/v1/chats/${chat.id}/messages`);
             setMessages(response.data);
+
+            // On mobile, hide sidebar after selecting a chat
+            if (isMobileView) {
+                setShowSidebar(false);
+            }
         } catch (error) {
             console.error('Error fetching messages for selected chat:', error);
             if (error.response && error.response.status === 401) {
@@ -99,9 +121,13 @@ const ChatApp = () => {
         }
     };
 
+    const toggleSidebar = () => {
+        setShowSidebar(!showSidebar);
+    };
+
     if (loading && !activeChat) {
         return (
-            <div className="container-fluid bg-light py-4 min-vh-100 d-flex justify-content-center align-items-center">
+            <div className="d-flex justify-content-center align-items-center vh-100 vw-100">
                 <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </div>
@@ -110,59 +136,78 @@ const ChatApp = () => {
     }
 
     return (
-        <div className="container-fluid bg-light py-4 min-vh-100">
-            <div className="row justify-content-center">
-                <div className="col-12 col-lg-10">
-                    <div className="card shadow-lg" style={{ height: 'calc(100vh - 56px)' }}>
-                        <div className="card-header bg-white d-flex justify-content-between align-items-center py-2">
-                            <h4 className="mb-0">Chat App</h4>
-                            <div className="d-flex align-items-center">
-                                {user && (
-                                    <span className="me-3">
-                                        <strong>Hello, {user.username}</strong>
-                                    </span>
-                                )}
-                                <button
-                                    className="btn btn-outline-danger btn-sm"
-                                    onClick={logout}
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                        <div className="card-body p-0" style={{ height: 'calc(100% - 56px)', overflow: 'hidden' }}>
-                            <div className="row g-0 h-100">
-                                {/* Chat List Sidebar */}
-                                <div className="col-md-4 col-lg-3 border-end h-100" style={{ overflowY: 'auto' }}>
-                                    <ChatList
-                                        chats={chatList}
-                                        activeChat={activeChat}
-                                        onChatSelect={handleChatSelect}
-                                        currentUser={user}
-                                    />
-                                </div>
+        <div className="vh-100 vw-100 d-flex flex-column overflow-hidden p-0 m-0">
+            {/* Main App Header */}
+            <div className="bg-white d-flex justify-content-between align-items-center px-3 py-2 shadow-sm">
+                <div className="d-flex align-items-center">
+                    {isMobileView && activeChat && !showSidebar && (
+                        <button
+                            className="btn btn-sm me-2"
+                            onClick={toggleSidebar}
+                        >
+                            <i className="bi bi-arrow-left"></i>
+                        </button>
+                    )}
+                    <h4 className="mb-0">Chat App</h4>
+                </div>
+                <div className="d-flex align-items-center">
+                    {user && (
+                        <span className="me-3 d-none d-md-block">
+                            <strong>Hello, {user.username}</strong>
+                        </span>
+                    )}
+                    <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={logout}
+                    >
+                        Logout
+                    </button>
+                </div>
+            </div>
 
-                                {/* Chat Area */}
-                                <div className="col-md-8 col-lg-9 d-flex flex-column h-100">
-                                    {activeChat && (
-                                        <>
-                                            <ChatHeader chat={activeChat} currentUser={user} />
-                                            <MessageList
-                                                messages={messages}
-                                                currentUser={user}
-                                            />
-                                            <MessageInput onSendMessage={handleSendMessage} />
-                                        </>
-                                    )}
-                                    {!activeChat && (
-                                        <div className="d-flex flex-column align-items-center justify-content-center h-100">
-                                            <h3 className="text-muted">Select a chat to start messaging</h3>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+            {/* Main Content Area */}
+            <div className="flex-grow-1 d-flex overflow-hidden">
+                {/* Chat List Sidebar - conditionally shown based on state */}
+                {showSidebar && (
+                    <div className={`${isMobileView ? 'position-absolute h-100 bg-white' : ''}`}
+                         style={{
+                             width: isMobileView ? '100%' : '300px',
+                             zIndex: isMobileView ? 1030 : 'auto',
+                             height: 'calc(100vh - 49px)',
+                             borderRight: '1px solid #dee2e6'
+                         }}>
+                        <ChatList
+                            chats={chatList}
+                            activeChat={activeChat}
+                            onChatSelect={handleChatSelect}
+                            currentUser={user}
+                        />
                     </div>
+                )}
+
+                {/* Chat Area */}
+                <div className="flex-grow-1 d-flex flex-column">
+                    {activeChat && (
+                        <>
+                            <ChatHeader
+                                chat={activeChat}
+                                currentUser={user}
+                                toggleSidebar={toggleSidebar}
+                                isMobileView={isMobileView}
+                                showSidebar={showSidebar}
+                            />
+                            <MessageList
+                                messages={messages}
+                                currentUser={user}
+                            />
+                            <MessageInput onSendMessage={handleSendMessage} />
+                        </>
+                    )}
+                    {!activeChat && (
+                        <div className="d-flex flex-column align-items-center justify-content-center h-100">
+                            <h3 className="text-muted">Select a chat to start messaging</h3>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

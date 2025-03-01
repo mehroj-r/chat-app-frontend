@@ -1,8 +1,8 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { SearchIcon, PhoneIcon, MoreVerticalIcon } from './Icons';
+import { SearchIcon, PhoneIcon, MoreVerticalIcon, MenuIcon } from './Icons';
 
-const ChatHeader = ({ chat, currentUser }) => {
+const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSidebar }) => {
     const getChatName = () => {
         if (!chat || !chat.last_message || !currentUser) return 'Loading...';
 
@@ -17,8 +17,16 @@ const ChatHeader = ({ chat, currentUser }) => {
     const chatName = getChatName();
 
     return (
-        <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
+        <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white">
             <div className="d-flex align-items-center">
+                {isMobileView && !showSidebar && (
+                    <button
+                        className="btn btn-light btn-sm rounded-circle me-2"
+                        onClick={toggleSidebar}
+                    >
+                        <MenuIcon />
+                    </button>
+                )}
                 <Avatar name={chatName} />
                 <div className="ms-3">
                     <div className="fw-medium">{chatName}</div>
@@ -26,7 +34,7 @@ const ChatHeader = ({ chat, currentUser }) => {
                 </div>
             </div>
             <div className="d-flex">
-                <button className="btn btn-light btn-sm rounded-circle mx-1">
+                <button className="btn btn-light btn-sm rounded-circle mx-1 d-none d-md-block">
                     <SearchIcon />
                 </button>
                 <button className="btn btn-light btn-sm rounded-circle mx-1">
