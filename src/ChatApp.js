@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Remove this line since you'll get it from props
-// import { useNavigate } from 'react-router-dom';
 import ChatList from './components/ChatList';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
@@ -10,8 +8,6 @@ import axios from 'axios';
 
 const ChatApp = () => {
     const { user, logout } = useAuth();
-    // Replace useNavigate hook with a prop or with proper context
-    // const navigate = useNavigate();
     const [chatList, setChatList] = useState([]);
     const [messages, setMessages] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
@@ -117,7 +113,7 @@ const ChatApp = () => {
         <div className="container-fluid bg-light py-4 min-vh-100">
             <div className="row justify-content-center">
                 <div className="col-12 col-lg-10">
-                    <div className="card shadow-lg">
+                    <div className="card shadow-lg" style={{ height: 'calc(100vh - 56px)' }}>
                         <div className="card-header bg-white d-flex justify-content-between align-items-center py-2">
                             <h4 className="mb-0">Chat App</h4>
                             <div className="d-flex align-items-center">
@@ -134,10 +130,10 @@ const ChatApp = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="card-body p-0">
-                            <div className="row g-0">
+                        <div className="card-body p-0" style={{ height: 'calc(100% - 56px)', overflow: 'hidden' }}>
+                            <div className="row g-0 h-100">
                                 {/* Chat List Sidebar */}
-                                <div className="col-md-4 col-lg-3 border-end">
+                                <div className="col-md-4 col-lg-3 border-end h-100" style={{ overflowY: 'auto' }}>
                                     <ChatList
                                         chats={chatList}
                                         activeChat={activeChat}
@@ -147,7 +143,7 @@ const ChatApp = () => {
                                 </div>
 
                                 {/* Chat Area */}
-                                <div className="col-md-8 col-lg-9 d-flex flex-column">
+                                <div className="col-md-8 col-lg-9 d-flex flex-column h-100">
                                     {activeChat && (
                                         <>
                                             <ChatHeader chat={activeChat} currentUser={user} />

@@ -69,7 +69,9 @@ const MessageList = ({ messages, currentUser }) => {
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
-                minHeight: '300px'
+                height: 'calc(100vh - 170px)', // Fixed height calculation
+                maxHeight: 'calc(100vh - 170px)', // Ensure it doesn't grow beyond this height
+                overflowY: 'auto' // Enable vertical scrolling
             }}
         >
             {messageGroups.map((group) => (
