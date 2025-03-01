@@ -1,16 +1,15 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { SearchIcon, PhoneIcon, MoreVerticalIcon, MenuIcon } from './Icons';
+import { SearchIcon, PhoneIcon, MoreVerticalIcon, MenuIcon, BackIcon } from './Icons';
 
 const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSidebar }) => {
     const getChatName = () => {
         if (!chat || !chat.last_message || !currentUser) return 'Loading...';
 
         // For now, we'll use the sender name from last message
-        // In a real app, you'd want to get the actual chat name or participant name
         const lastMessageSender = chat.last_message.sender_username;
         return lastMessageSender === currentUser.username
-            ? `Chat ${chat.id}` // Replace with actual recipient name when API provides it
+            ? `Chat ${chat.id}`
             : chat.last_message.sender_name;
     };
 
@@ -19,12 +18,13 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
     return (
         <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white">
             <div className="d-flex align-items-center">
-                {isMobileView && !showSidebar && (
+                {isMobileView && (
                     <button
                         className="btn btn-light btn-sm rounded-circle me-2"
                         onClick={toggleSidebar}
+                        aria-label={showSidebar ? "Close sidebar" : "Back to chat list"}
                     >
-                        <MenuIcon />
+                        {showSidebar ? <MenuIcon /> : <BackIcon />}
                     </button>
                 )}
                 <Avatar name={chatName} />

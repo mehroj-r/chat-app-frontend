@@ -69,8 +69,8 @@ const MessageList = ({ messages, currentUser }) => {
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
-                height: 'calc(100vh - 165px)', // Adjusted for full screen layout
-                maxHeight: 'calc(100vh - 165px)',
+                height: 'calc(100vh - 116px)', // Adjusted for layout without top header
+                maxHeight: 'calc(100vh - 116px)',
                 overflowY: 'auto'
             }}
         >

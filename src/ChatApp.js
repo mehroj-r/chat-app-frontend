@@ -3,6 +3,7 @@ import ChatList from './components/ChatList';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
+import ProfileSidebar from './components/ProfileSidebar';
 import { useAuth } from './auth/AuthContext';
 import axios from 'axios';
 
@@ -14,6 +15,7 @@ const ChatApp = () => {
     const [loading, setLoading] = useState(true);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
     const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 768);
+    const [showProfileSidebar, setShowProfileSidebar] = useState(false);
 
     // Handle window resize
     useEffect(() => {
@@ -38,10 +40,6 @@ const ChatApp = () => {
                 const response = await axios.get('http://127.0.0.1:8000/api/v1/chats/');
                 setChatList(response.data);
 
-                // Set first chat as active if no active chat is selected
-                if (response.data.length > 0 && !activeChat) {
-                    setActiveChat(response.data[0]);
-                }
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching chats:', error);
@@ -122,7 +120,27 @@ const ChatApp = () => {
     };
 
     const toggleSidebar = () => {
-        setShowSidebar(!showSidebar);
+        if (isMobileView && !showSidebar && activeChat) {
+            // When in mobile view with a chat open and sidebar closed,
+            // we're using the button as a "back" button to show the chat list
+            setShowSidebar(true);
+        } else {
+            // Regular toggle behavior
+            setShowSidebar(!showSidebar);
+        }
+
+        // Close profile sidebar when opening chat sidebar
+        if (showProfileSidebar && !showSidebar) {
+            setShowProfileSidebar(false);
+        }
+    };
+
+    const toggleProfileSidebar = () => {
+        setShowProfileSidebar(!showProfileSidebar);
+        // Close chat sidebar when opening profile sidebar on mobile
+        if (isMobileView && showSidebar && !showProfileSidebar) {
+            setShowSidebar(false);
+        }
     };
 
     if (loading && !activeChat) {
@@ -137,43 +155,32 @@ const ChatApp = () => {
 
     return (
         <div className="vh-100 vw-100 d-flex flex-column overflow-hidden p-0 m-0">
-            {/* Main App Header */}
-            <div className="bg-white d-flex justify-content-between align-items-center px-3 py-2 shadow-sm">
-                <div className="d-flex align-items-center">
-                    {isMobileView && activeChat && !showSidebar && (
-                        <button
-                            className="btn btn-sm me-2"
-                            onClick={toggleSidebar}
-                        >
-                            <i className="bi bi-arrow-left"></i>
-                        </button>
-                    )}
-                    <h4 className="mb-0">Chat App</h4>
-                </div>
-                <div className="d-flex align-items-center">
-                    {user && (
-                        <span className="me-3 d-none d-md-block">
-                            <strong>Hello, {user.username}</strong>
-                        </span>
-                    )}
-                    <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={logout}
-                    >
-                        Logout
-                    </button>
-                </div>
-            </div>
-
             {/* Main Content Area */}
             <div className="flex-grow-1 d-flex overflow-hidden">
-                {/* Chat List Sidebar - conditionally shown based on state */}
+                {/* Profile Sidebar */}
+                {showProfileSidebar && (
+                    <div className={`${isMobileView ? 'position-absolute h-100 bg-white' : ''}`}
+                         style={{
+                             width: isMobileView ? '100%' : '300px',
+                             zIndex: isMobileView ? 1040 : 'auto',
+                             height: '100vh',
+                             borderRight: '1px solid #dee2e6'
+                         }}>
+                        <ProfileSidebar
+                            user={user}
+                            logout={logout}
+                            onClose={toggleProfileSidebar}
+                        />
+                    </div>
+                )}
+
+                {/* Chat List Sidebar */}
                 {showSidebar && (
                     <div className={`${isMobileView ? 'position-absolute h-100 bg-white' : ''}`}
                          style={{
                              width: isMobileView ? '100%' : '300px',
                              zIndex: isMobileView ? 1030 : 'auto',
-                             height: 'calc(100vh - 49px)',
+                             height: '100vh',
                              borderRight: '1px solid #dee2e6'
                          }}>
                         <ChatList
@@ -181,6 +188,7 @@ const ChatApp = () => {
                             activeChat={activeChat}
                             onChatSelect={handleChatSelect}
                             currentUser={user}
+                            onMenuClick={toggleProfileSidebar}
                         />
                     </div>
                 )}

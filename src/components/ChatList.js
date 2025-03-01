@@ -1,8 +1,8 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { MenuIcon, SearchIcon, CheckIcon } from './Icons';
+import { MenuIcon, SearchIcon } from './Icons';
 
-const ChatList = ({ chats, activeChat, onChatSelect, currentUser }) => {
+const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick }) => {
     // Format timestamp from API to display time or date
     const formatTime = (timestampStr) => {
         if (!timestampStr) return '';
@@ -36,7 +36,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser }) => {
         <>
             {/* Header */}
             <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
-                <button className="btn btn-light btn-sm rounded-circle">
+                <button className="btn btn-light btn-sm rounded-circle" onClick={onMenuClick}>
                     <MenuIcon />
                 </button>
                 <div className="position-relative flex-grow-1 mx-2">
@@ -52,7 +52,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser }) => {
             </div>
 
             {/* Chat List */}
-            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 170px)' }}>
+            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 72px)' }}>
                 {chats.map((chat) => {
                     const chatName = getChatName(chat);
                     const lastMessage = chat.last_message?.text || 'No messages yet';
