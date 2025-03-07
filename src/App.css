@@ -55,10 +55,65 @@ body, html {
   overflow: hidden;
 }
 
+/* Fixed header for mobile view */
+.chat-header-container {
+  width: 100%;
+  z-index: 1000; /* Increase z-index to ensure it stays on top */
+  background-color: white; /* Ensure header has background */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Desktop-specific styling */
+@media (min-width: 768px) {
+  .chat-header-container {
+    position: sticky;
+    top: 0;
+  }
+
+  .message-container-wrapper {
+    height: calc(100vh - 56px) !important; /* Adjust based on your header height */
+  }
+}
+
 /* Improved mobile scrolling */
 @media (max-width: 767px) {
   .chat-message-container {
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Add additional padding to account for safe areas on mobile */
+  .app-container {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Ensure the sidebars respect the safe area at the top */
+  .position-absolute.h-100.bg-white {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Adjust the message container */
+  .p-4.overflow-auto.flex-grow-1.position-relative {
+    position: relative;
+    padding-top: 1rem !important;
+    height: calc(100vh - 116px - env(safe-area-inset-top, 0px)) !important;
+    max-height: calc(100vh - 116px - env(safe-area-inset-top, 0px)) !important;
+    margin-top: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-header-container {
+    padding-top: env(safe-area-inset-top, 0);
+    position: fixed; /* Change to fixed on mobile */
+    top: env(safe-area-inset-top, 0);
+    left: 0;
+    right: 0;
+  }
+
+  /* Add padding to the chat area to account for the fixed header */
+  .flex-grow-1.d-flex.flex-column > .p-4.overflow-auto {
+    padding-top: calc(56px + 1rem) !important; /* Adjust based on your header height */
+    margin-top: env(safe-area-inset-top, 0);
   }
 }
 
@@ -70,4 +125,10 @@ body, html {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+.chat-header {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem) !important;
+  padding-bottom: 0.75rem !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }

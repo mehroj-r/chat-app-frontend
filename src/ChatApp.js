@@ -6,6 +6,7 @@ import MessageInput from './components/MessageInput';
 import ProfileSidebar from './components/ProfileSidebar';
 import { useAuth } from './auth/AuthContext';
 import axios from 'axios';
+import API_BASE_URL from './config/apiConfig';
 
 const ChatApp = () => {
     const { user, logout } = useAuth();
@@ -14,7 +15,8 @@ const ChatApp = () => {
     const [activeChat, setActiveChat] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-    const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 768);
+    // Always show sidebar by default, regardless of screen size
+    const [showSidebar, setShowSidebar] = useState(true);
     const [showProfileSidebar, setShowProfileSidebar] = useState(false);
 
     // Handle window resize
@@ -37,7 +39,7 @@ const ChatApp = () => {
         const fetchChats = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://127.0.0.1:8000/api/v1/chats/');
+                const response = await axios.get(`${API_BASE_URL}/api/v1/chats/`);
                 setChatList(response.data);
 
                 setLoading(false);
@@ -63,7 +65,7 @@ const ChatApp = () => {
 
         const fetchMessages = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:8000/api/v1/chats/${activeChat.id}/messages`);
+                const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${activeChat.id}/messages`);
                 setMessages(response.data);
             } catch (error) {
                 console.error('Error fetching messages:', error);
@@ -85,13 +87,13 @@ const ChatApp = () => {
         if (!text.trim() || !activeChat) return;
 
         try {
-            await axios.post('http://127.0.0.1:8000/api/v1/send/', {
+            await axios.post(`${API_BASE_URL}/api/v1/send/`, {
                 chat: activeChat.id,
                 text: text
             });
 
             // Fetch updated messages
-            const response = await axios.get(`http://127.0.0.1:8000/api/v1/chats/${activeChat.id}/messages`);
+            const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${activeChat.id}/messages`);
             setMessages(response.data);
         } catch (error) {
             console.error('Error sending message:', error);
@@ -104,7 +106,7 @@ const ChatApp = () => {
     const handleChatSelect = async (chat) => {
         setActiveChat(chat);
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/v1/chats/${chat.id}/messages`);
+            const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${chat.id}/messages`);
             setMessages(response.data);
 
             // On mobile, hide sidebar after selecting a chat
@@ -120,16 +122,7 @@ const ChatApp = () => {
     };
 
     const toggleSidebar = () => {
-        if (isMobileView && !showSidebar && activeChat) {
-            // When in mobile view with a chat open and sidebar closed,
-            // we're using the button as a "back" button to show the chat list
-            setShowSidebar(true);
-        } else {
-            // Regular toggle behavior
-            setShowSidebar(!showSidebar);
-        }
-
-        // Close profile sidebar when opening chat sidebar
+        setShowSidebar(!showSidebar);
         if (showProfileSidebar && !showSidebar) {
             setShowProfileSidebar(false);
         }
@@ -137,13 +130,12 @@ const ChatApp = () => {
 
     const toggleProfileSidebar = () => {
         setShowProfileSidebar(!showProfileSidebar);
-        // Close chat sidebar when opening profile sidebar on mobile
         if (isMobileView && showSidebar && !showProfileSidebar) {
             setShowSidebar(false);
         }
     };
 
-    if (loading && !activeChat) {
+    if (loading && !activeChat && chatList.length === 0) {
         return (
             <div className="d-flex justify-content-center align-items-center vh-100 vw-100">
                 <div className="spinner-border text-primary" role="status">
@@ -164,7 +156,9 @@ const ChatApp = () => {
                              width: isMobileView ? '100%' : '300px',
                              zIndex: isMobileView ? 1040 : 'auto',
                              height: '100vh',
-                             borderRight: '1px solid #dee2e6'
+                             borderRight: '1px solid #dee2e6',
+                             top: 0,
+                             left: 0
                          }}>
                         <ProfileSidebar
                             user={user}
@@ -181,7 +175,9 @@ const ChatApp = () => {
                              width: isMobileView ? '100%' : '300px',
                              zIndex: isMobileView ? 1030 : 'auto',
                              height: '100vh',
-                             borderRight: '1px solid #dee2e6'
+                             borderRight: '1px solid #dee2e6',
+                             top: 0,
+                             left: 0
                          }}>
                         <ChatList
                             chats={chatList}
@@ -197,21 +193,32 @@ const ChatApp = () => {
                 <div className="flex-grow-1 d-flex flex-column">
                     {activeChat && (
                         <>
-                            <ChatHeader
-                                chat={activeChat}
-                                currentUser={user}
-                                toggleSidebar={toggleSidebar}
-                                isMobileView={isMobileView}
-                                showSidebar={showSidebar}
-                            />
-                            <MessageList
-                                messages={messages}
-                                currentUser={user}
-                            />
-                            <MessageInput onSendMessage={handleSendMessage} />
+                            <div className={`chat-header-container ${isMobileView ? 'fixed-top' : 'sticky-top'}`}>
+                                <ChatHeader
+                                    chat={activeChat}
+                                    currentUser={user}
+                                    toggleSidebar={toggleSidebar}
+                                    isMobileView={isMobileView}
+                                    showSidebar={showSidebar}
+                                />
+                            </div>
+                            <div className="message-container-wrapper" style={{
+                                height: isMobileView ? 'calc(100vh - 56px)' : 'calc(100vh - 56px)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                flexGrow: 1,
+                                overflow: 'hidden'
+                            }}>
+                                <MessageList
+                                    messages={messages}
+                                    currentUser={user}
+                                    isMobileView={isMobileView}
+                                />
+                                <MessageInput onSendMessage={handleSendMessage} />
+                            </div>
                         </>
                     )}
-                    {!activeChat && (
+                    {!activeChat && !isMobileView && (
                         <div className="d-flex flex-column align-items-center justify-content-center h-100">
                             <h3 className="text-muted">Select a chat to start messaging</h3>
                         </div>

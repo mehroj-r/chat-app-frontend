@@ -1,12 +1,15 @@
 import React, { useRef, useEffect } from 'react';
 
-const MessageList = ({ messages, currentUser }) => {
+const MessageList = ({ messages, currentUser, isMobileView }) => {
     const messagesEndRef = useRef(null);
 
     // Auto scroll to bottom on new messages
     useEffect(() => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            // Use scrollIntoView with a different behavior to prevent affecting the header
+            messagesEndRef.current.scrollIntoView({
+                behavior: 'smooth', // Animate scrolling
+            });
         }
     }, [messages]);
 
@@ -61,18 +64,37 @@ const MessageList = ({ messages, currentUser }) => {
 
     const messageGroups = groupMessagesByDate();
 
+    // Calculate the right height for the message container
+    const getContainerStyle = () => {
+        const baseStyle = {
+            backgroundImage: "url('/api/placeholder/800/600')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            overflowY: 'auto'
+        };
+
+        // For desktop view
+        if (!isMobileView) {
+            return {
+                ...baseStyle,
+                height: 'calc(100% - 60px)', // Adjust for message input height
+                flexGrow: 1
+            };
+        }
+
+        // For mobile view
+        return {
+            ...baseStyle,
+            height: 'calc(100vh - 116px)',
+            maxHeight: 'calc(100vh - 116px)'
+        };
+    };
+
     return (
         <div
             className="p-4 overflow-auto flex-grow-1 position-relative"
-            style={{
-                backgroundImage: "url('/api/placeholder/800/600')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                height: 'calc(100vh - 116px)', // Adjusted for layout without top header
-                maxHeight: 'calc(100vh - 116px)',
-                overflowY: 'auto'
-            }}
+            style={getContainerStyle()}
         >
             {messageGroups.map((group) => (
                 <div key={group.date}>

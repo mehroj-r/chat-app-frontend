@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Avatar from './Avatar';
 import axios from 'axios';
+import API_BASE_URL from '../config/apiConfig';
 
 const ProfileSidebar = ({ user, logout, onClose }) => {
     const [userDetails, setUserDetails] = useState(null);
@@ -11,7 +12,7 @@ const ProfileSidebar = ({ user, logout, onClose }) => {
             try {
                 setLoading(true);
                 // Using the existing user info endpoint, but you can create a more detailed one
-                const response = await axios.get('http://127.0.0.1:8000/api/v1/me/');
+                const response = await axios.get(`${API_BASE_URL}/api/v1/me/`);
                 setUserDetails(response.data);
                 setLoading(false);
             } catch (error) {

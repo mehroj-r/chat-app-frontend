@@ -25,7 +25,6 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
         if (!chat || !chat.last_message || !currentUser) return 'Loading...';
 
         // For now, we'll use the sender name from last message
-        // In a real app, you'd want to get the actual chat name or participant name
         const lastMessageSender = chat.last_message.sender_username;
         return lastMessageSender === currentUser.username
             ? `Chat ${chat.id}` // Replace with actual recipient name when API provides it
@@ -33,7 +32,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
     };
 
     return (
-        <>
+        <div className="d-flex flex-column h-100">
             {/* Header */}
             <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
                 <button className="btn btn-light btn-sm rounded-circle" onClick={onMenuClick}>
@@ -51,8 +50,8 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                 </div>
             </div>
 
-            {/* Chat List */}
-            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 72px)' }}>
+            {/* Chat List - Fixed height calculation and proper overflow */}
+            <div className="overflow-auto flex-grow-1" style={{ height: 'calc(100vh - 72px)' }}>
                 {chats.map((chat) => {
                     const chatName = getChatName(chat);
                     const lastMessage = chat.last_message?.text || 'No messages yet';
@@ -71,7 +70,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                             <div className="ms-3 flex-grow-1">
                                 <div className="d-flex justify-content-between">
                                     <div className="d-flex align-items-center">
-                                        <span className="fw-medium">{chatName}</span>
+                                        <span className="fw-medium">{currentUser.first_name}</span>
                                     </div>
                                     <span className="small text-muted">{time}</span>
                                 </div>
@@ -91,7 +90,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 };
 

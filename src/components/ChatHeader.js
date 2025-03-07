@@ -16,7 +16,7 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
     const chatName = getChatName();
 
     return (
-        <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white">
+        <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white w-100 chat-header">
             <div className="d-flex align-items-center">
                 {isMobileView && (
                     <button
@@ -29,7 +29,7 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
                 )}
                 <Avatar name={chatName} />
                 <div className="ms-3">
-                    <div className="fw-medium">{chatName}</div>
+                    <div className="fw-medium">{currentUser.first_name}</div>
                     <div className="small text-muted">last seen recently</div>
                 </div>
             </div>

@@ -32,7 +32,6 @@ const ProtectedRoute = ({ children }) => {
 
 const App = () => {
     return (
-        // Removed the Router component that was here
         <div className="app-container">
             <Routes>
                 <Route path="/login" element={<LoginPage />} />

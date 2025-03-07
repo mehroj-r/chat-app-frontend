@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/apiConfig';
 
 // Create the context with default values to avoid undefined errors
 const AuthContext = createContext({
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 setLoading(true);
-                const response = await axios.get('http://127.0.0.1:8000/api/v1/me/');
+                const response = await axios.get(`${API_BASE_URL}/api/v1/me/`);
                 setUser(response.data);
                 setError(null);
             } catch (err) {
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (username, password) => {
         try {
             setLoading(true);
-            const response = await axios.post('http://127.0.0.1:8000/api/v1/token/', {
+            const response = await axios.post(`${API_BASE_URL}/api/v1/token/`, {
                 username,
                 password
             });
@@ -77,7 +78,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', access);
 
             // Load user information
-            const userResponse = await axios.get('http://127.0.0.1:8000/api/v1/me/', {
+            const userResponse = await axios.get(`${API_BASE_URL}/api/v1/me/`, {
                 headers: { Authorization: `Bearer ${access}` }
             });
             setUser(userResponse.data);

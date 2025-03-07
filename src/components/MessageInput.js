@@ -20,8 +20,8 @@ const MessageInput = ({ onSendMessage }) => {
     };
 
     return (
-        <div className="p-3 border-top mt-auto">
-            <form onSubmit={handleSubmit} className="d-flex align-items-center">
+        <div className="p-3 border-top" style={{ marginBottom: 0, paddingBottom: 0 }}>
+            <form onSubmit={handleSubmit} className="d-flex align-items-center" style={{ marginBottom: 0 }}>
                 <button type="button" className="btn btn-light btn-sm rounded-circle">
                     <SmileIcon />
                 </button>
