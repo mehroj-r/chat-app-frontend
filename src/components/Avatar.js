@@ -2,7 +2,7 @@ import React from 'react';
 
 const Avatar = ({ name = 'User' }) => {
     const getInitial = (name) => {
-        return name ? name.charAt(0).toUpperCase() : 'U';
+        return name ? name.charAt(0).toUpperCase() : '?';
     };
 
     const initial = getInitial(name);

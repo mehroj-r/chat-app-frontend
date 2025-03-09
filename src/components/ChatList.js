@@ -20,17 +20,6 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
         }
     };
 
-    // Helper to get other person's name in a chat
-    const getChatName = (chat) => {
-        if (!chat || !chat.last_message || !currentUser) return 'Loading...';
-
-        // For now, we'll use the sender name from last message
-        const lastMessageSender = chat.last_message.sender_username;
-        return lastMessageSender === currentUser.username
-            ? `Chat ${chat.id}` // Replace with actual recipient name when API provides it
-            : chat.last_message.sender_name;
-    };
-
     return (
         <div className="d-flex flex-column h-100">
             {/* Header */}
@@ -53,7 +42,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
             {/* Chat List - Fixed height calculation and proper overflow */}
             <div className="overflow-auto flex-grow-1" style={{ height: 'calc(100vh - 72px)' }}>
                 {chats.map((chat) => {
-                    const chatName = getChatName(chat);
+                    const chatName = chat.display_name;
                     const lastMessage = chat.last_message?.text || 'No messages yet';
                     const time = chat.last_message ? formatTime(chat.last_message.sent_at) : '';
 
@@ -70,7 +59,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                             <div className="ms-3 flex-grow-1">
                                 <div className="d-flex justify-content-between">
                                     <div className="d-flex align-items-center">
-                                        <span className="fw-medium">{currentUser.first_name}</span>
+                                        <span className="fw-medium">{chatName}</span>
                                     </div>
                                     <span className="small text-muted">{time}</span>
                                 </div>

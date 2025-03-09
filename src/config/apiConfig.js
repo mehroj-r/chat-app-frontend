@@ -3,7 +3,7 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 
 // Use the appropriate base URL
 const API_BASE_URL = isLocalhost
-    ? 'http://127.0.0.1:8000'
-    : `http://${window.location.hostname.split(':')[0]}:8000`;
+    ? 'http://127.0.0.1:8000/api/v1'
+    : `http://${window.location.hostname.split(':')[0]}:8000/api/v1`;
 
 export default API_BASE_URL;

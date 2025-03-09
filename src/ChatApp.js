@@ -7,15 +7,16 @@ import ProfileSidebar from './components/ProfileSidebar';
 import { useAuth } from './auth/AuthContext';
 import axios from 'axios';
 import API_BASE_URL from './config/apiConfig';
+import WebSocketService from './services/WebSocketService';
 
 const ChatApp = () => {
-    const { user, logout } = useAuth();
+    const {user, logout } = useAuth();
     const [chatList, setChatList] = useState([]);
     const [messages, setMessages] = useState([]);
+    // const [members, setMembers] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-    // Always show sidebar by default, regardless of screen size
     const [showSidebar, setShowSidebar] = useState(true);
     const [showProfileSidebar, setShowProfileSidebar] = useState(false);
 
@@ -24,7 +25,7 @@ const ChatApp = () => {
         const handleResize = () => {
             const mobile = window.innerWidth < 768;
             setIsMobileView(mobile);
-            // On larger screens, always show sidebar
+
             if (!mobile) {
                 setShowSidebar(true);
             }
@@ -39,7 +40,7 @@ const ChatApp = () => {
         const fetchChats = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${API_BASE_URL}/api/v1/chats/`);
+                const response = await axios.get(`${API_BASE_URL}/chats/`);
                 setChatList(response.data);
 
                 setLoading(false);
@@ -65,7 +66,7 @@ const ChatApp = () => {
 
         const fetchMessages = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${activeChat.id}/messages`);
+                const response = await axios.get(`${API_BASE_URL}/chats/${activeChat.id}/messages`);
                 setMessages(response.data);
             } catch (error) {
                 console.error('Error fetching messages:', error);
@@ -77,26 +78,76 @@ const ChatApp = () => {
 
         fetchMessages();
 
-        // Poll for new messages every 3 seconds when a chat is active
-        const intervalId = setInterval(fetchMessages, 3000);
+        // Connect to WebSocket for real-time messages
+        if (!WebSocketService.isConnected()){
+            WebSocketService
+                .connect(activeChat.id)
+                .onMessage(data => {
 
-        return () => clearInterval(intervalId);
+                    console.log(data);
+
+                    // If server sends complete message list
+                    if (Array.isArray(data.messages)) {
+                        setMessages(data.messages);
+                    }
+                    // If server sends just the new message
+                    else if (data.message) {
+                        setMessages(oldMessages => [...oldMessages, data.message]);
+                    }
+                })
+                .onConnect(() => {
+                    console.log('Connected to chat WebSocket: ', activeChat.id);
+                })
+                .onDisconnect(() => {
+                    console.log('Disconnected from chat WebSocket: ', activeChat.id);
+                });
+        }
+
     }, [activeChat, logout]);
 
-    const handleSendMessage = async (text) => {
+    const handleSendMessage = (text) => {
         if (!text.trim() || !activeChat) return;
 
         try {
-            await axios.post(`${API_BASE_URL}/api/v1/send/`, {
+            // Check if WebSocket is connected
+            if (!WebSocketService.isConnected()) {
+                // Reconnect if not connected
+                WebSocketService.connect(activeChat.id);
+                // Wait a bit for connection to establish
+                setTimeout(() => {
+                    try {
+                        WebSocketService.sendMessage(text, activeChat.id);
+                    } catch (error) {
+                        console.error('Error sending via WebSocket after reconnect:', error);
+                        fallbackSendMessage(text);
+                    }
+                }, 500);
+            } else {
+                // Send message through WebSocket service
+                WebSocketService.sendMessage(text, activeChat.id);
+            }
+
+        } catch (error) {
+            console.error('Error sending message:', error);
+
+            // Fallback to REST API if WebSocket fails
+            fallbackSendMessage(text);
+        }
+    };
+
+    // Fallback method using REST API if WebSocket fails
+    const fallbackSendMessage = async (text) => {
+        try {
+            await axios.post(`${API_BASE_URL}/send/`, {
                 chat: activeChat.id,
                 text: text
             });
 
             // Fetch updated messages
-            const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${activeChat.id}/messages`);
+            const response = await axios.get(`${API_BASE_URL}/chats/${activeChat.id}/messages`);
             setMessages(response.data);
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Error sending message via REST fallback:', error);
             if (error.response && error.response.status === 401) {
                 logout();
             }
@@ -106,15 +157,15 @@ const ChatApp = () => {
     const handleChatSelect = async (chat) => {
         setActiveChat(chat);
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/v1/chats/${chat.id}/messages`);
-            setMessages(response.data);
+            // const response = await axios.get(`${API_BASE_URL}/chats/${chat.id}/members`);
+            // setMembers(response.data);
 
             // On mobile, hide sidebar after selecting a chat
             if (isMobileView) {
                 setShowSidebar(false);
             }
         } catch (error) {
-            console.error('Error fetching messages for selected chat:', error);
+            console.error('Error fetching messages/members for selected chat:', error);
             if (error.response && error.response.status === 401) {
                 logout();
             }

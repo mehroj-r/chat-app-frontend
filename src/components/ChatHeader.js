@@ -1,19 +1,10 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { SearchIcon, PhoneIcon, MoreVerticalIcon, MenuIcon, BackIcon } from './Icons';
+import {BackIcon, MenuIcon, MoreVerticalIcon, PhoneIcon, SearchIcon} from './Icons';
 
 const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSidebar }) => {
-    const getChatName = () => {
-        if (!chat || !chat.last_message || !currentUser) return 'Loading...';
 
-        // For now, we'll use the sender name from last message
-        const lastMessageSender = chat.last_message.sender_username;
-        return lastMessageSender === currentUser.username
-            ? `Chat ${chat.id}`
-            : chat.last_message.sender_name;
-    };
-
-    const chatName = getChatName();
+    const chatName = chat.display_name;
 
     return (
         <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white w-100 chat-header">
@@ -29,7 +20,7 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
                 )}
                 <Avatar name={chatName} />
                 <div className="ms-3">
-                    <div className="fw-medium">{currentUser.first_name}</div>
+                    <div className="fw-medium">{chatName}</div>
                     <div className="small text-muted">last seen recently</div>
                 </div>
             </div>
