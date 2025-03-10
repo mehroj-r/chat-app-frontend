@@ -45,6 +45,7 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                     const chatName = chat.display_name;
                     const lastMessage = chat.last_message?.text || 'No messages yet';
                     const time = chat.last_message ? formatTime(chat.last_message.sent_at) : '';
+                    const unreadCount = chat.unread_count || 0;
 
                     return (
                         <div
@@ -67,6 +68,11 @@ const ChatList = ({ chats, activeChat, onChatSelect, currentUser, onMenuClick })
                                     <span className="text-truncate me-2 text-muted small" style={{ maxWidth: '150px' }}>
                                         {lastMessage}
                                     </span>
+                                    {unreadCount > 0 && (
+                                        <span className="badge bg-primary rounded-pill ms-1">
+                                            {unreadCount}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

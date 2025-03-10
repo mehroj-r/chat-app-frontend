@@ -106,7 +106,8 @@ const ChatApp = () => {
                         type: data.type,
                         // Only update display_name if it exists in the incoming data
                         ...(data.display_name && { display_name: data.display_name }),
-                        updated_at: new Date().toISOString() // Add current timestamp for sorting
+                        updated_at: new Date().toISOString(), // Add current timestamp for sorting
+                        unread_count: activeChat && activeChat.id === data.id ? 0 : data.unread_count,
                     };
 
                     // Sort by most recent update
@@ -155,6 +156,8 @@ const ChatApp = () => {
     useEffect(() => {
         if (!activeChat) return;
 
+        WebSocketServiceForMessages.disconnect();
+
         const fetchMessages = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/chats/${activeChat.id}/messages`);
@@ -170,29 +173,28 @@ const ChatApp = () => {
         fetchMessages();
 
         // Connect to WebSocket for real-time messages
-        if (!WebSocketServiceForMessages.isConnected()){
-            WebSocketServiceForMessages
-                .connect(activeChat.id)
-                .onMessage(data => {
+        WebSocketServiceForMessages
+            .connect(activeChat.id)
+            .onMessage(data => {
 
-                    console.log(data);
+                console.log(data);
 
-                    // If server sends complete message list
-                    if (Array.isArray(data.messages)) {
-                        setMessages(data.messages);
-                    }
-                    // If server sends just the new message
-                    else if (data.message) {
-                        setMessages(oldMessages => [...oldMessages, data.message]);
-                    }
-                })
-                .onConnect(() => {
-                    console.log('Connected to chat WebSocket: ', activeChat.id);
-                })
-                .onDisconnect(() => {
-                    console.log('Disconnected from chat WebSocket: ', activeChat.id);
-                });
-        }
+                // If server sends complete message list
+                if (Array.isArray(data.messages)) {
+                    setMessages(data.messages);
+                }
+                // If server sends just the new message
+                else if (data.message) {
+                    setMessages(oldMessages => [...oldMessages, data.message]);
+                }
+            })
+            .onConnect(() => {
+                console.log('Connected to chat WebSocket: ', activeChat.id);
+            })
+            .onDisconnect(() => {
+                console.log('Disconnected from chat WebSocket: ', activeChat.id);
+            });
+
 
     }, [activeChat, logout]);
 

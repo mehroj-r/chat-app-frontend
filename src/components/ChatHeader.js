@@ -21,7 +21,7 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
                 <Avatar name={chatName} />
                 <div className="ms-3">
                     <div className="fw-medium">{chatName}</div>
-                    <div className="small text-muted">last seen recently</div>
+                    <div className="small text-muted">{chat.type === "private" ? "last seen recently" : "group"}</div>
                 </div>
             </div>
             <div className="d-flex">
