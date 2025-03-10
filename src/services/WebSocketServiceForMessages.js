@@ -28,7 +28,7 @@ class ChatWebSocketService {
             : `ws://${window.location.hostname.split(':')[0]}:8000`;
 
         // Create new WebSocket connection
-        this.socket = new WebSocket(`${wsBaseUrl}/ws/chat/${chatId}/`);
+        this.socket = new WebSocket(`${wsBaseUrl}/ws/chats/${chatId}/`);
 
         // Set up event handlers
         this.socket.onopen = () => {
@@ -78,6 +78,8 @@ class ChatWebSocketService {
             this.socket.close(4001, 'No authentication token available');
             return;
         }
+
+        console.log(token);
 
         this.socket.send(JSON.stringify({
             token: token

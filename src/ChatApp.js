@@ -7,7 +7,8 @@ import ProfileSidebar from './components/ProfileSidebar';
 import { useAuth } from './auth/AuthContext';
 import axios from 'axios';
 import API_BASE_URL from './config/apiConfig';
-import WebSocketService from './services/WebSocketService';
+import WebSocketServiceForMessages from './services/WebSocketServiceForMessages';
+import WebSocketServiceForChats from './services/WebSocketServiceForChats';
 
 const ChatApp = () => {
     const {user, logout } = useAuth();
@@ -35,29 +36,119 @@ const ChatApp = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Fetch chat list
+    // // Fetch chat list
+    // useEffect(() => {
+    //     const fetchChats = async () => {
+    //         try {
+    //             setLoading(true);
+    //             const response = await axios.get(`${API_BASE_URL}/chats/`);
+    //             setChatList(response.data);
+    //
+    //             setLoading(false);
+    //         } catch (error) {
+    //             console.error('Error fetching chats:', error);
+    //             if (error.response && error.response.status === 401) {
+    //                 logout();
+    //             }
+    //             setLoading(false);
+    //         }
+    //     };
+    //
+    //     fetchChats();
+    //     // Poll for new chats every 30 seconds
+    //     const intervalId = setInterval(fetchChats, 30000);
+    //
+    //     return () => clearInterval(intervalId);
+    // }, [activeChat, logout]);
+
+    // Fetch chat list initially and set up WebSocket for updates
     useEffect(() => {
+        let isComponentMounted = true;
+
         const fetchChats = async () => {
             try {
                 setLoading(true);
                 const response = await axios.get(`${API_BASE_URL}/chats/`);
-                setChatList(response.data);
 
-                setLoading(false);
+                if (isComponentMounted) {
+                    setChatList(response.data);
+                    setLoading(false);
+                }
             } catch (error) {
                 console.error('Error fetching chats:', error);
                 if (error.response && error.response.status === 401) {
                     logout();
                 }
-                setLoading(false);
+                if (isComponentMounted) {
+                    setLoading(false);
+                }
             }
         };
 
-        fetchChats();
-        // Poll for new chats every 30 seconds
-        const intervalId = setInterval(fetchChats, 30000);
+        // Handle chat list updates from WebSocket
+        const handleChatListUpdate = (data) => {
+            // Check if valid data was received
+            if (!data || !data.id) {
+                console.error('Received invalid chat update data:', data);
+                return;
+            }
 
-        return () => clearInterval(intervalId);
+            setChatList(prevChatList => {
+                // Find if this chat already exists in the list
+                const existingChatIndex = prevChatList.findIndex(chat => chat.id === data.id);
+
+                if (existingChatIndex !== -1) {
+                    // Update existing chat
+                    const updatedList = [...prevChatList];
+                    updatedList[existingChatIndex] = {
+                        ...updatedList[existingChatIndex],
+                        last_message: data.last_message,
+                        type: data.type,
+                        // Only update display_name if it exists in the incoming data
+                        ...(data.display_name && { display_name: data.display_name }),
+                        updated_at: new Date().toISOString() // Add current timestamp for sorting
+                    };
+
+                    // Sort by most recent update
+                    return updatedList.sort((a, b) =>
+                        new Date(b.updated_at) - new Date(a.updated_at)
+                    );
+                } else {
+                    // Add new chat to the list
+                    const newChat = {
+                        ...data,
+                        updated_at: new Date().toISOString()
+                    };
+
+                    // Add to list and sort
+                    return [...prevChatList, newChat].sort((a, b) =>
+                        new Date(b.updated_at) - new Date(a.updated_at)
+                    );
+                }
+            });
+        };
+
+        // Initial data fetch
+        fetchChats();
+
+        // Set up WebSocket connection
+        WebSocketServiceForChats
+            .connect()
+            .onUpdate(handleChatListUpdate)
+            .onConnect(() => {
+                console.log('Connected to chat list updates');
+            })
+            .onDisconnect(() => {
+                console.log('Disconnected from chat list updates');
+            });
+
+        // Clean up function
+        return () => {
+            isComponentMounted = false;
+            WebSocketServiceForChats
+                .removeUpdateHandler(handleChatListUpdate)
+                .disconnect();
+        };
     }, [activeChat, logout]);
 
     // Fetch messages when active chat changes
@@ -79,8 +170,8 @@ const ChatApp = () => {
         fetchMessages();
 
         // Connect to WebSocket for real-time messages
-        if (!WebSocketService.isConnected()){
-            WebSocketService
+        if (!WebSocketServiceForMessages.isConnected()){
+            WebSocketServiceForMessages
                 .connect(activeChat.id)
                 .onMessage(data => {
 
@@ -105,18 +196,19 @@ const ChatApp = () => {
 
     }, [activeChat, logout]);
 
+    // Handles sending messages through WebSocket connection
     const handleSendMessage = (text) => {
         if (!text.trim() || !activeChat) return;
 
         try {
             // Check if WebSocket is connected
-            if (!WebSocketService.isConnected()) {
+            if (!WebSocketServiceForMessages.isConnected()) {
                 // Reconnect if not connected
-                WebSocketService.connect(activeChat.id);
+                WebSocketServiceForMessages.connect(activeChat.id);
                 // Wait a bit for connection to establish
                 setTimeout(() => {
                     try {
-                        WebSocketService.sendMessage(text, activeChat.id);
+                        WebSocketServiceForMessages.sendMessage(text, activeChat.id);
                     } catch (error) {
                         console.error('Error sending via WebSocket after reconnect:', error);
                         fallbackSendMessage(text);
@@ -124,7 +216,7 @@ const ChatApp = () => {
                 }, 500);
             } else {
                 // Send message through WebSocket service
-                WebSocketService.sendMessage(text, activeChat.id);
+                WebSocketServiceForMessages.sendMessage(text, activeChat.id);
             }
 
         } catch (error) {

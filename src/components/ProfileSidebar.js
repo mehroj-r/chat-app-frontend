@@ -46,11 +46,13 @@ const ProfileSidebar = ({ user, logout, onClose }) => {
                     </div>
                 ) : (
                     <>
-                        <div className="text-center mb-4">
-                            <div className="mx-auto mb-3">
+                        <div className="flex flex-row items-center justify-center mb-4" style={{ display: 'flex', flexDirection: 'row' }}>
+                            <div className="mr-3" style={{ display: 'inline-block' }}>
                                 <Avatar name={user?.username} />
                             </div>
-                            <h4>{user?.username}</h4>
+                            <div style={{ display: 'inline-block', width: '40px', margin: '10px 10px 10px 15px' }}>
+                                <h4>{user?.first_name}</h4>
+                            </div>
                         </div>
 
                         <div className="card mb-4">
@@ -74,9 +76,6 @@ const ProfileSidebar = ({ user, logout, onClose }) => {
                                         <strong>Last Name:</strong> {userDetails.last_name}
                                     </div>
                                 )}
-                                <div className="mb-2">
-                                    <strong>Account created:</strong> {new Date(userDetails?.date_joined).toLocaleDateString()}
-                                </div>
                             </div>
                         </div>
 
