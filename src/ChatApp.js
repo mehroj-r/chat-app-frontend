@@ -36,34 +36,11 @@ const ChatApp = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // // Fetch chat list
-    // useEffect(() => {
-    //     const fetchChats = async () => {
-    //         try {
-    //             setLoading(true);
-    //             const response = await axios.get(`${API_BASE_URL}/chats/`);
-    //             setChatList(response.data);
-    //
-    //             setLoading(false);
-    //         } catch (error) {
-    //             console.error('Error fetching chats:', error);
-    //             if (error.response && error.response.status === 401) {
-    //                 logout();
-    //             }
-    //             setLoading(false);
-    //         }
-    //     };
-    //
-    //     fetchChats();
-    //     // Poll for new chats every 30 seconds
-    //     const intervalId = setInterval(fetchChats, 30000);
-    //
-    //     return () => clearInterval(intervalId);
-    // }, [activeChat, logout]);
 
     // Fetch chat list initially and set up WebSocket for updates
     useEffect(() => {
         let isComponentMounted = true;
+        let mountDelay;
 
         const fetchChats = async () => {
             try {
@@ -84,6 +61,9 @@ const ChatApp = () => {
                 }
             }
         };
+
+        // Initial data fetch
+        fetchChats();
 
         // Handle chat list updates from WebSocket
         const handleChatListUpdate = (data) => {
@@ -129,29 +109,37 @@ const ChatApp = () => {
             });
         };
 
-        // Initial data fetch
-        fetchChats();
-
-        // Set up WebSocket connection
-        WebSocketServiceForChats
-            .connect()
-            .onUpdate(handleChatListUpdate)
-            .onConnect(() => {
-                console.log('Connected to chat list updates');
-            })
-            .onDisconnect(() => {
-                console.log('Disconnected from chat list updates');
-            });
+        // Delay WebSocket connection to avoid React StrictMode double-mount issues
+        mountDelay = setTimeout(() => {
+            if (isComponentMounted) {
+                // Set up WebSocket connection
+                WebSocketServiceForChats
+                    .connect()
+                    .onUpdate(handleChatListUpdate)
+                    .onConnect(() => {
+                        console.log('Connected to chat list updates');
+                    })
+                    .onDisconnect(() => {
+                        console.log('Disconnected from chat list updates');
+                    });
+            }
+        }, 300); // Short delay to avoid React StrictMode issues
 
         // Clean up function
         return () => {
             isComponentMounted = false;
-            WebSocketServiceForChats
-                .removeUpdateHandler(handleChatListUpdate)
-                .disconnect();
+            clearTimeout(mountDelay);
+
+            // Only remove the handler but don't disconnect during component unmount/remount cycles
+            // This avoids the connection being closed prematurely
+            WebSocketServiceForChats.removeUpdateHandler(handleChatListUpdate);
+
+            // Only disconnect when unmounting for good (like page navigation)
+            if (!document.hidden) {
+                WebSocketServiceForChats.disconnect();
+            }
         };
     }, [activeChat, logout]);
-
     // Fetch messages when active chat changes
     useEffect(() => {
         if (!activeChat) return;

@@ -13,8 +13,19 @@ class ChatListWebSocketService {
 
     // Connect to WebSocket for user's chat list
     connect() {
-        // Close existing connection if any
-        this.disconnect();
+        // If already connecting or connected, don't create a new connection
+        if (this.socket) {
+            if (this.socket.readyState === WebSocket.CONNECTING) {
+                console.log('WebSocket is already connecting, skipping new connection attempt');
+                return this;
+            }
+            if (this.socket.readyState === WebSocket.OPEN) {
+                console.log('WebSocket is already connected');
+                return this;
+            }
+            // If socket exists but isn't connecting or open, close it properly
+            this.disconnect();
+        }
 
         // Reset reconnect attempts on manual connect
         this.reconnectAttempts = 0;
@@ -36,7 +47,12 @@ class ChatListWebSocketService {
             this.reconnectAttempts = 0;
             this.connectionHandlers.onConnect.forEach(handler => handler());
 
-            this.sendAuthToken(); // Send auth token
+            // Slight delay to ensure connection is fully established
+            setTimeout(() => {
+                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    this.sendAuthToken();
+                }
+            }, 100);
         };
 
         this.socket.onmessage = (event) => {
@@ -67,8 +83,13 @@ class ChatListWebSocketService {
 
     // Send authentication token
     sendAuthToken() {
-        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-            console.error('Cannot authenticate: Chat list WebSocket is not connected');
+        if (!this.socket) {
+            console.error('Cannot authenticate: No WebSocket instance exists');
+            return;
+        }
+
+        if (this.socket.readyState !== WebSocket.OPEN) {
+            console.error(`Cannot authenticate: WebSocket is not open (state: ${this.socket.readyState})`);
             return;
         }
 
@@ -79,15 +100,27 @@ class ChatListWebSocketService {
             return;
         }
 
-        this.socket.send(JSON.stringify({
-            token: token
-        }));
-
-        console.log('Authentication token sent for chat list WebSocket');
+        try {
+            this.socket.send(JSON.stringify({
+                token: token
+            }));
+            console.log('Authentication token sent for chat list WebSocket');
+        } catch (e) {
+            console.error('Error sending auth token:', e);
+        }
     }
 
     // Attempt to reconnect with exponential backoff
-    attemptReconnect(userId) {
+    attemptReconnect() {
+        // Don't try to reconnect if we're already connecting or connected
+        if (this.socket) {
+            if (this.socket.readyState === WebSocket.CONNECTING ||
+                this.socket.readyState === WebSocket.OPEN) {
+                console.log('Already connecting or connected, skipping reconnect');
+                return;
+            }
+        }
+
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
             const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
@@ -96,7 +129,7 @@ class ChatListWebSocketService {
 
             setTimeout(() => {
                 console.log('Reconnecting chat list WebSocket...');
-                this.connect(userId);
+                this.connect();
             }, delay);
         } else {
             console.error('Maximum reconnection attempts reached for chat list WebSocket');
@@ -137,9 +170,18 @@ class ChatListWebSocketService {
     // Disconnect and clean up
     disconnect() {
         if (this.socket) {
-            // Use code 1000 for normal closure
-            this.socket.close(1000, 'Disconnecting normally');
-            this.socket = null;
+            try {
+                // Only attempt to close if not already closed
+                if (this.socket.readyState !== WebSocket.CLOSED &&
+                    this.socket.readyState !== WebSocket.CLOSING) {
+                    // Use code 1000 for normal closure
+                    this.socket.close(1000, 'Disconnecting normally');
+                }
+            } catch (e) {
+                console.error('Error closing WebSocket:', e);
+            } finally {
+                this.socket = null;
+            }
         }
         return this;
     }

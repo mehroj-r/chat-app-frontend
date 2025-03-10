@@ -6,6 +6,7 @@ const MessageList = ({ messages, currentUser, isMobileView }) => {
     const avatarWidth = 48; // Width of the Avatar component
     const avatarMargin = 8; // Margin between avatar and message (me-2 or ms-2)
     const avatarSpace = avatarWidth + avatarMargin; // Total space needed for avatar
+    const colors = ['#007bff', '#6f42c1', '#e83e8c', '#fd7e14', '#28a745', '#20c997', '#17a2b8', '#6c757d'];
 
     // Auto scroll to bottom on new messages
     useEffect(() => {
@@ -198,6 +199,8 @@ const MessageList = ({ messages, currentUser, isMobileView }) => {
                 }
             }
 
+            const colorIndex = currentUser.first_name ? currentUser.first_name.length % colors.length : 0;
+
             return (
                 <div
                     key={message.id}
@@ -232,7 +235,7 @@ const MessageList = ({ messages, currentUser, isMobileView }) => {
                     >
                         {/* Show sender name only for the first message in a group for non-current user */}
                         {!isMe && message.isFirstInGroup && (
-                            <div className="fw-medium mb-1 small" style={{ color: "blue" }}>
+                            <div className="fw-medium mb-1 small" style={{ color: colors[colorIndex] }}>
                                 {message.sender_name}
                             </div>
                         )}

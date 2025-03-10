@@ -79,8 +79,6 @@ class ChatWebSocketService {
             return;
         }
 
-        console.log(token);
-
         this.socket.send(JSON.stringify({
             token: token
         }));
