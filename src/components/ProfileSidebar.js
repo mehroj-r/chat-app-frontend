@@ -57,7 +57,6 @@ const ProfileSidebar = ({ user, logout, onClose }) => {
 
                         <div className="card mb-4">
                             <div className="card-body">
-                                <h6 className="card-title border-bottom pb-2">User Information</h6>
                                 <div className="mb-2">
                                     <strong>Username:</strong> {userDetails?.username}
                                 </div>

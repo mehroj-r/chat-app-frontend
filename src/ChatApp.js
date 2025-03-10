@@ -20,6 +20,7 @@ const ChatApp = () => {
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
     const [showSidebar, setShowSidebar] = useState(true);
     const [showProfileSidebar, setShowProfileSidebar] = useState(false);
+    const [typingStatusList, setTypingStatus] = useState([]);
 
     // Handle window resize
     useEffect(() => {
@@ -140,6 +141,39 @@ const ChatApp = () => {
             }
         };
     }, [activeChat, logout]);
+
+    function handleTypingStatusUpdate(data) {
+        if (!data) {
+            console.error('Received invalid typing status update data:', data);
+            return;
+        }
+
+        setTypingStatus(
+            prevStatusList => {
+                // Find if this user already exists in the list
+                const existingUserIndex = prevStatusList.findIndex(user => user.username === data.username);
+
+                if (existingUserIndex !== -1) {
+                    const updatedList = [...prevStatusList];
+                    // Update existing user
+                    updatedList[existingUserIndex] = {
+                        ...updatedList[existingUserIndex],
+                        typing_status: data.typing_status,
+                    };
+
+                    return updatedList;
+                } else {
+                    // Record new user
+                    const newUser = {
+                        ...data,
+                    };
+                    return [...prevStatusList, newUser]
+                }
+
+            }
+        );
+    }
+
     // Fetch messages when active chat changes
     useEffect(() => {
         if (!activeChat) return;
@@ -165,8 +199,6 @@ const ChatApp = () => {
             .connect(activeChat.id)
             .onMessage(data => {
 
-                console.log(data);
-
                 // If server sends complete message list
                 if (Array.isArray(data.messages)) {
                     setMessages(data.messages);
@@ -174,6 +206,10 @@ const ChatApp = () => {
                 // If server sends just the new message
                 else if (data.message) {
                     setMessages(oldMessages => [...oldMessages, data.message]);
+                }
+                // If server sends typingStatusList update
+                else if (data.typing_status) {
+                    handleTypingStatusUpdate(data);
                 }
             })
             .onConnect(() => {
@@ -342,6 +378,7 @@ const ChatApp = () => {
                                     chat={activeChat}
                                     currentUser={user}
                                     toggleSidebar={toggleSidebar}
+                                    typingStatusList={typingStatusList}
                                     isMobileView={isMobileView}
                                     showSidebar={showSidebar}
                                 />
@@ -358,7 +395,10 @@ const ChatApp = () => {
                                     currentUser={user}
                                     isMobileView={isMobileView}
                                 />
-                                <MessageInput onSendMessage={handleSendMessage} />
+                                <MessageInput
+                                    onSendMessage={handleSendMessage}
+                                    currentUser={user}
+                                />
                             </div>
                         </>
                     )}

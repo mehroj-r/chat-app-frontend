@@ -105,7 +105,6 @@ class ChatWebSocketService {
 
     // Send a message through the WebSocket
     sendMessage(text, chatId) {
-
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             throw new Error('WebSocket is not connected');
         }
@@ -113,6 +112,19 @@ class ChatWebSocketService {
         this.socket.send(JSON.stringify({
             chat_id: chatId,
             text: text
+        }));
+    }
+
+    // Send typing status through the WebSocket
+    sendTypingStatus(statusData) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        this.socket.send(JSON.stringify({
+            chat_id: statusData.chat_id,
+            typing_status: statusData.typing_status,
+            username: statusData.username
         }));
     }
 

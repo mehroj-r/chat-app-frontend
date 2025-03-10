@@ -2,9 +2,41 @@ import React from 'react';
 import Avatar from './Avatar';
 import {BackIcon, MenuIcon, MoreVerticalIcon, PhoneIcon, SearchIcon} from './Icons';
 
-const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSidebar }) => {
+const ChatHeader = ({ chat, currentUser, toggleSidebar, typingStatusList, isMobileView, showSidebar }) => {
 
     const chatName = chat.display_name;
+    let typingStatus = "last seen recently";
+
+    if (chat.type === "private"){
+        for (const x of typingStatusList) {
+            if (x.typing_status.username !== currentUser.username) {
+                typingStatus = x.typing_status.status;
+            }
+        }
+    } else {
+        typingStatus = "group";
+        let statuses = [];
+
+        for (const x of typingStatusList) {
+            if (x.typing_status.username !== currentUser.username && x.typing_status.status !== "last seen recently") {
+                statuses.push(currentUser.first_name + " is " + x.typing_status.status);
+            }
+
+            if (statuses.length === 2) {
+                break;
+            }
+        }
+
+        if (statuses.length > 0) {
+            typingStatus = "";
+            for (const x of statuses) {
+                typingStatus += x + ", ";
+            }
+            typingStatus = typingStatus.substr(0, typingStatus.length - 2);
+        }
+
+    }
+
 
     return (
         <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-white w-100 chat-header">
@@ -21,7 +53,7 @@ const ChatHeader = ({ chat, currentUser, toggleSidebar, isMobileView, showSideba
                 <Avatar name={chatName} />
                 <div className="ms-3">
                     <div className="fw-medium">{chatName}</div>
-                    <div className="small text-muted">{chat.type === "private" ? "last seen recently" : "group"}</div>
+                    <div className="small text-muted">{typingStatus}</div>
                 </div>
             </div>
             <div className="d-flex">

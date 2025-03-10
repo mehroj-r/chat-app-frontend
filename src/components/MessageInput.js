@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { SmileIcon, SendIcon } from './Icons';
+import WebSocketServiceForMessages from '../services/WebSocketServiceForMessages';
 
-const MessageInput = ({ onSendMessage }) => {
+const MessageInput = ({ onSendMessage, currentUser }) => {
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
 
     const handleInputChange = (e) => {
         setNewMessage(e.target.value);
@@ -19,6 +21,33 @@ const MessageInput = ({ onSendMessage }) => {
         }
     };
 
+    // Handle focus and blur events to send typing status
+    const handleFocus = () => {
+        setIsFocused(true);
+        sendTypingStatus(isFocused);
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+        sendTypingStatus(isFocused);
+    };
+
+    // Send typing status through WebSocket
+    const sendTypingStatus = (isTyping) => {
+        if (!WebSocketServiceForMessages.isConnected()) {
+            return;
+        }
+
+        try {
+            WebSocketServiceForMessages.sendTypingStatus({
+                typing_status: !isTyping ? `typing ...` : 'last seen recently',
+                username: currentUser.username
+            });
+        } catch (error) {
+            console.error('Error sending typing status:', error);
+        }
+    };
+
     return (
         <div className="p-3 border-top" style={{ marginBottom: 0, paddingBottom: 0 }}>
             <form onSubmit={handleSubmit} className="d-flex align-items-center" style={{ marginBottom: 0 }}>
@@ -31,6 +60,8 @@ const MessageInput = ({ onSendMessage }) => {
                     className="form-control mx-2 rounded-pill"
                     value={newMessage}
                     onChange={handleInputChange}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     disabled={isSending}
                 />
                 <button
