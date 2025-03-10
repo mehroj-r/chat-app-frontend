@@ -250,6 +250,17 @@ const ChatApp = () => {
 
     const handleChatSelect = async (chat) => {
         setActiveChat(chat);
+
+        // Reset unread count for the selected chat
+        setChatList(prevChatList => {
+            return prevChatList.map(c => {
+                if (c.id === chat.id) {
+                    return { ...c, unread_count: 0 };
+                }
+                return c;
+            });
+        });
+
         try {
             // const response = await axios.get(`${API_BASE_URL}/chats/${chat.id}/members`);
             // setMembers(response.data);
