@@ -1,3 +1,5 @@
+import WS_BASE_URL from '../config/wsConfig';
+
 class ChatWebSocketService {
     constructor() {
         this.socket = null;
@@ -19,16 +21,8 @@ class ChatWebSocketService {
         // Reset reconnect attempts on manual connect
         this.reconnectAttempts = 0;
 
-        // Detect if we're running on localhost or on a network
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-        // Use the appropriate base URL
-        const wsBaseUrl = isLocalhost
-            ? 'ws://127.0.0.1:8000'
-            : `ws://${window.location.hostname.split(':')[0]}:8000`;
-
         // Create new WebSocket connection
-        this.socket = new WebSocket(`${wsBaseUrl}/ws/chats/${chatId}/`);
+        this.socket = new WebSocket(`${WS_BASE_URL}/ws/chats/${chatId}/`);
 
         // Set up event handlers
         this.socket.onopen = () => {
