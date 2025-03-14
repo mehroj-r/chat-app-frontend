@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build: .
+    container_name: frontend_react
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_PIPELINE=production
+      - REACT_APP_HOST=localhost
+      - REACT_APP_PORT=8080
